@@ -1,0 +1,29 @@
+---
+title: "Liqudity abd Leverage"
+author: "Karl Polen"
+date: "May 9, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+nav=data.frame(t0=c(.8,3.2,20,4,5,7,0))
+leverage=data.frame(t0=nav$t0*c(0,0,0,0,4/6,3/7,0))
+assets=nav+leverage
+asset_names=c("Cash","Bonds","Pub_Eq","Private_Eq","Real_Estate","Credit","Other")
+rownames(nav)=rownames(leverage)=rownames(assets)=asset_names
+fund_lev=data.frame(t0=0)
+```
+
+```{r}
+show_pos=function(t) {
+  x=data.frame(NAV=nav$t,PCT=100*nav$t/sum(nav$t))
+  rownames(x)=asset_names
+  
+  x
+}
+show_pos("t0")
+```
