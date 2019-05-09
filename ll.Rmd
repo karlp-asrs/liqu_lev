@@ -7,6 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(knitr)
 ```
 
 ```{r}
@@ -20,10 +22,37 @@ fund_lev=data.frame(t0=0)
 
 ```{r}
 show_pos=function(t) {
-  x=data.frame(NAV=nav$t,PCT=100*nav$t/sum(nav$t))
-  rownames(x)=asset_names
-  
-  x
+  pct=100*nav$t/sum(nav$t)
+  tarpct=c(0,10,42,8,20,20,0)
+  deltapct=pct-tarpct
+  deltadol=deltapct*.01*sum(nav$t)
+  x=data.frame(Names=asset_names, Assets=assets$t, Portfolio_Lev=leverage$t,
+               NAV=nav$t,PCT=pct,Delta_PCT=deltapct,Delta_Dollar=deltadol)
+  x=add_row(x,Names="Gross Positioning",
+            Assets=sum(assets$t),
+            Portfolio_Lev=sum(leverage$t),
+            NAV=sum(nav$t),
+            PCT=100,
+            Delta_PCT=0,
+            Delta_Dollar=0)
+  x=add_row(x,Names="Fund Level Leverage",
+            Assets=NA,
+            Portfolio_Lev=NA,
+            NAV=-fund_lev$t,
+            PCT=NA,
+            Delta_PCT=NA,
+            Delta_Dollar=NA)
+  x=add_row(x,Names="NAV",
+            Assets=NA,
+            Portfolio_Lev=NA,
+            NAV=sum(nav$t)-fund_lev$t,
+            PCT=NA,
+            Delta_PCT=NA,
+            Delta_Dollar=NA)
+  kable(x)
+  print(paste0(
+    "Private Equity % of Total Equity = ",
+    round(100*nav$t[4]/(nav$t[3]+nav$t[4]),1),"%"))
 }
 show_pos("t0")
 ```
