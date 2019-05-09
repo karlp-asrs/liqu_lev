@@ -12,7 +12,7 @@ library(knitr)
 ```
 
 ```{r}
-nav=data.frame(t0=c(.8,3.2,20,4,5,7,0))
+nav=data.frame(t0=c(.948,4.628-.587,19.209-.590,3.932,5.328+.191,7.265-.056,.094))
 leverage=data.frame(t0=nav$t0*c(0,0,0,0,4/6,3/7,0))
 assets=nav+leverage
 asset_names=c("Cash","Bonds","Pub_Eq","Private_Eq","Real_Estate","Credit","Other")
@@ -21,38 +21,51 @@ fund_lev=data.frame(t0=0)
 ```
 
 ```{r}
-show_pos=function(t) {
-  pct=100*nav$t/sum(nav$t)
+show_pos=function(tc) {
+  pct=100*nav[,tc]/sum(nav[,tc])
   tarpct=c(0,10,42,8,20,20,0)
   deltapct=pct-tarpct
-  deltadol=deltapct*.01*sum(nav$t)
-  x=data.frame(Names=asset_names, Assets=assets$t, Portfolio_Lev=leverage$t,
-               NAV=nav$t,PCT=pct,Delta_PCT=deltapct,Delta_Dollar=deltadol)
+  deltadol=deltapct*.01*sum(nav[,tc])
+  x=data.frame(Names=asset_names, Assets=assets[,tc], Portfolio_Lev=leverage[,tc],
+               NAV=nav[,tc],PCT=pct,Delta_PCT=deltapct,Delta_Dollar=deltadol)
   x=add_row(x,Names="Gross Positioning",
-            Assets=sum(assets$t),
-            Portfolio_Lev=sum(leverage$t),
-            NAV=sum(nav$t),
+            Assets=sum(assets[,tc]),
+            Portfolio_Lev=sum(leverage[,tc]),
+            NAV=sum(nav[,tc]),
             PCT=100,
             Delta_PCT=0,
             Delta_Dollar=0)
   x=add_row(x,Names="Fund Level Leverage",
             Assets=NA,
             Portfolio_Lev=NA,
-            NAV=-fund_lev$t,
+            NAV=-fund_lev[,tc],
             PCT=NA,
             Delta_PCT=NA,
             Delta_Dollar=NA)
   x=add_row(x,Names="NAV",
             Assets=NA,
             Portfolio_Lev=NA,
-            NAV=sum(nav$t)-fund_lev$t,
+            NAV=sum(nav[,tc])-fund_lev[,tc],
             PCT=NA,
             Delta_PCT=NA,
             Delta_Dollar=NA)
-  kable(x)
-  print(paste0(
-    "Private Equity % of Total Equity = ",
-    round(100*nav$t[4]/(nav$t[3]+nav$t[4]),1),"%"))
+  x$PE_PCT=c(NA,NA,NA,round(100*nav[4,tc]/(nav[3,tc]+nav[4,tc]),1),NA,NA,NA,NA,NA,NA)
+  levpct=100*c(leverage[,tc]/assets[,tc],NA,fund_lev[,tc]/sum(nav[,tc]),NA)
+  x$Lev_PCT=levpct
+  kable(x,digits=1)
 }
 show_pos("t0")
+```
+
+```{r}
+trx=function(start,end,ndelta,ldelta=rep(0,7),fldelta=0) {
+  if (0 != (sum(ndelta)-sum(ldelta))) stop("transaction not in balance")
+  nav[,end]<<-nav[,start]+ndelta
+  leverage[,end]<<-leverage[,start]+ldelta
+  assets[,end]<<-leverage[,end]+nav[,end]
+  fund_lev[,end]<<-fund_lev[,start]+fldelta
+  return(NULL)
+}
+tbin=trx("t0","t1",c(0,0,1,-1,0,0,0),rep(0,7))
+show_pos("t1")
 ```
